@@ -1,0 +1,83 @@
+---
+title: "assignment 1"
+author: "luca ferrari"
+date: "Saturday, July 19, 2014"
+output: html_document
+---
+
+This assignment will be described in multiple parts. You will need to write a report that answers the questions detailed below. Ultimately, you will need to complete the entire assignment in a single R markdown document that can be processed by knitr and be transformed into an HTML file.
+
+Throughout your report make sure you always include the code that you used to generate the output you present. When writing code chunks in the R markdown document, always use echo = TRUE so that someone else will be able to read the code. This assignment will be evaluated via peer assessment so it is essential that your peer evaluators be able to review the code for your analysis.
+
+For the plotting aspects of this assignment, feel free to use any plotting system in R (i.e., base, lattice, ggplot2)
+
+Fork/clone the GitHub repository created for this assignment. You will submit this assignment by pushing your completed files into your forked repository on GitHub. The assignment submission will consist of the URL to your GitHub repository and the SHA-1 commit ID for your repository state.
+
+NOTE: The GitHub repository also contains the dataset for the assignment so you do not have to download the data separately.
+
+##Load and process data
+```{r load and process data}
+##loading data
+act<-read.csv("activity.csv")
+##omitting NA values
+actna<-na.omit(act)
+##calculating the total number of steps per date
+x<-split(x = actna$steps,f = actna$date)
+totstepsperday<-data.frame(sapply(x,sum))
+names(totstepsperday)<-"daysteps"
+```
+
+
+##Mean number of steps per day
+```{r mean  number of steps}
+##histogram of number of steps per date
+barplot(height = totstepsperday$daysteps)
+##mean and median number of steps per day
+mean(totstepsperday$daysteps)
+median(totstepsperday$daysteps)
+```
+
+##Average daily activity
+```{r average daily activity}
+##calculating the avg number of steps per interval
+y<-split(x = actna$steps,f = actna$interval)
+avgstepsperint<-data.frame(sapply(y,mean))
+names(avgstepsperint)<-"intsteps"
+plot(avgstepsperint[,1],type = "l")
+##the interval that has on average most steps
+unique(actna$interval)[avgstepsperint[,1]==max(avgstepsperint)]
+```
+
+##Input missing values
+```{r missing values calculation}
+##number of NA in the steps column
+totna<-length(act$steps)-length(actna$steps)
+##filling the NA with the avg across all day
+intervals<-dim(avgstepsperint)[1]
+avgstepsperintday<-totstepsperday/intervals
+##substitute the NA with averages
+for(i in dim(act)[1]){
+  if(is.na(act[i,1]) & i<dim(act)[1]){
+    act[i,1]=avgstepsperintday[1+floor(i/intervals),1]
+  }else if(is.na(act[i,1]) & i==dim(act)[1]){
+    act[i,1]=avgstepsperintday[i/intervals,1]
+  }
+}
+x<-split(x = act$steps,f = act$date)
+totstepsperday<-data.frame(sapply(x,sum))
+names(totstepsperday)<-"daysteps"
+##histogram of number of steps per date
+barplot(height = totstepsperday$daysteps)
+##mean and median number of steps per day
+mean(totstepsperday$daysteps)
+median(totstepsperday$daysteps)
+```
+
+##Are there differences in activity patterns between weekdays and weekends?
+```{r weekdays analysis}
+z<-split(x=act$steps,f = weekdays(as.Date.character(act$date)))
+stepsweekend<-(z$Saturday + z$Sunday) /2
+stepsweekday<-(z$Monday + z$Tuesday + z$Wednesday + z$Thursday + z$Friday)/5
+plot(stepsweekend,type = "l")
+plot(stepsweekday,type = "l")
+```
